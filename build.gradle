@@ -25,3 +25,16 @@ processResources {
         expand(version: '1.0.0', mcversion: '1.21.1')
     }
 }
+
+test {
+    useJUnitPlatform()
+}
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testCompileOnly files('libs/toms_storage_stubs.jar')
+    testRuntimeOnly files('libs/toms_storage_stubs.jar')
+    testCompileOnly fileTree(dir: 'build/moddev/artifacts', include: '*.jar')
+    testCompileOnly fileTree(dir: '/home/agent/.gradle/caches/modules-2', include: '**/*.jar')
+    testRuntimeOnly fileTree(dir: 'build/moddev/artifacts', include: '*.jar')
+    testRuntimeOnly fileTree(dir: '/home/agent/.gradle/caches/modules-2', include: '**/*.jar')
+}

@@ -51,9 +51,7 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 		List<WorldPos> linked = stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get());
 		if (linked != null && !linked.isEmpty()) {
 			if (!worldIn.isClientSide) {
-				WorldPos best = null;
-				boolean bestSameDim = false;
-				double bestDist = Double.MAX_VALUE;
+				List<WorldPos> available = new ArrayList<>();
 				for (WorldPos wp : linked) {
 					Level termWorld = worldIn.getServer().getLevel(wp.dim());
 					if (termWorld == null) continue;
@@ -61,14 +59,10 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 					if (!termWorld.isLoaded(bp)) continue;
 					BlockState state = termWorld.getBlockState(bp);
 					if (!state.is(REMOTE_ACTIVATE)) continue;
-					boolean sameDim = wp.dim().equals(playerIn.level().dimension());
-					double dist = sameDim ? playerIn.distanceToSqr(bp.getX() + 0.5D, bp.getY() + 0.5D, bp.getZ() + 0.5D) : Double.MAX_VALUE;
-					if (best == null || (sameDim && !bestSameDim) || (sameDim == bestSameDim && dist < bestDist)) {
-						best = wp;
-						bestSameDim = sameDim;
-						bestDist = dist;
-					}
+					available.add(wp);
 				}
+				WorldPos best = selectClosest(available, playerIn.level().dimension(),
+						playerIn.getX(), playerIn.getY(), playerIn.getZ());
 				if (best != null) {
 					int x = best.pos().getX();
 					int y = best.pos().getY();
@@ -112,6 +106,26 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 			}
 		}
 		return InteractionResult.PASS;
+	}
+
+	public static WorldPos selectClosest(List<WorldPos> candidates, net.minecraft.resources.ResourceKey<Level> playerDim,
+			double px, double py, double pz) {
+		WorldPos best = null;
+		boolean bestSameDim = false;
+		double bestDist = Double.MAX_VALUE;
+		for (WorldPos wp : candidates) {
+			boolean sameDim = wp.dim().equals(playerDim);
+			double dx = wp.pos().getX() + 0.5D - px;
+			double dy = wp.pos().getY() + 0.5D - py;
+			double dz = wp.pos().getZ() + 0.5D - pz;
+			double dist = sameDim ? (dx * dx + dy * dy + dz * dz) : Double.MAX_VALUE;
+			if (best == null || (sameDim && !bestSameDim) || (sameDim == bestSameDim && dist < bestDist)) {
+				best = wp;
+				bestSameDim = sameDim;
+				bestDist = dist;
+			}
+		}
+		return best;
 	}
 
 	@Override
