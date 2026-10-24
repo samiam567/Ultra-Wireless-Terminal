@@ -3,6 +3,8 @@ package com.ultrawireless.terminal;
 import java.util.List;
 
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -31,5 +33,12 @@ public class UltraWirelessTerminalMod {
 	public UltraWirelessTerminalMod(IEventBus modEventBus) {
 		ITEMS.register(modEventBus);
 		COMPONENTS.register(modEventBus);
+		modEventBus.addListener(this::addCreative);
+	}
+
+	private void addCreative(BuildCreativeModeTabContentsEvent event) {
+		if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+			event.accept(ULTRA_WIRELESS_TERMINAL.get());
+		}
 	}
 }

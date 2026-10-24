@@ -17,6 +17,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,6 +41,14 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 		List<WorldPos> linked = stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get());
 		int count = linked == null ? 0 : linked.size();
 		tooltip.add(Component.literal("Linked terminals: " + count).withStyle(ChatFormatting.GRAY));
+		if (Screen.hasShiftDown()) {
+			tooltip.add(Component.literal("Links to multiple Tom's Storage terminals.").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.literal("Sneak + right-click a terminal to link/unlink.").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.literal("Sneak + right-click in air to clear all.").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.literal("Right-click to open the closest available linked terminal.").withStyle(ChatFormatting.GRAY));
+		} else {
+			tooltip.add(Component.translatable("tooltip.toms_storage.hold_shift_for_info").withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY));
+		}
 	}
 
 	@Override

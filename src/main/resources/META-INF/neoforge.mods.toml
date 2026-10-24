@@ -25,3 +25,10 @@ description="Ultra wireless terminal linking multiple Tom's Storage terminals"
     versionRange="[0,)"
     ordering="AFTER"
     side="BOTH"
+
+[[dependencies.ultra_wireless_terminal]]
+    modId="jei"
+    type="optional"
+    versionRange="[0,)"
+    ordering="NONE"
+    side="BOTH"
