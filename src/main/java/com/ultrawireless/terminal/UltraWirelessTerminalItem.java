@@ -43,7 +43,7 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 		tooltip.add(Component.literal("Linked terminals: " + count).withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.translatable("tooltip.toms_storage.adv_wireless_terminal.keybind", Component.translatable("tooltip.toms_storage.adv_wireless_terminal.keybind.outline", Component.keybind("key.toms_storage.open_terminal")).withStyle(ChatFormatting.GREEN)));
 		if (Screen.hasShiftDown()) {
-			tooltip.add(Component.literal("Links to multiple Tom's Storage terminals.").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.literal("Links to multiple Tom's Storage terminals.").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 			tooltip.add(Component.literal("Sneak + right-click a terminal to link/unlink.").withStyle(ChatFormatting.GRAY));
 			tooltip.add(Component.literal("Sneak + right-click in air to clear all.").withStyle(ChatFormatting.GRAY));
 			tooltip.add(Component.literal("Right-click to open the closest available linked terminal.").withStyle(ChatFormatting.GRAY));
