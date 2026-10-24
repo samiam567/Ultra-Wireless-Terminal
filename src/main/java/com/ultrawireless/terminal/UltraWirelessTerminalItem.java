@@ -44,7 +44,15 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
-		return new InteractionResultHolder<>(activateTerminal(worldIn, playerIn.getItemInHand(handIn), playerIn, handIn), playerIn.getItemInHand(handIn));
+		ItemStack stack = playerIn.getItemInHand(handIn);
+		if (playerIn.isShiftKeyDown()) {
+			if (!worldIn.isClientSide) {
+				stack.set(UltraWirelessTerminalMod.BOUND_TERMINALS.get(), new ArrayList<>());
+				playerIn.displayClientMessage(Component.literal("Unlinked all terminals"), true);
+			}
+			return new InteractionResultHolder<>(InteractionResult.SUCCESS, stack);
+		}
+		return new InteractionResultHolder<>(activateTerminal(worldIn, stack, playerIn, handIn), stack);
 	}
 
 	public static InteractionResult activateTerminal(Level worldIn, ItemStack stack, Player playerIn, InteractionHand handIn) {
@@ -94,11 +102,18 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 				if (state.is(REMOTE_ACTIVATE)) {
 					ItemStack stack = c.getItemInHand();
 					WorldPos wp = new WorldPos(c.getLevel().dimension(), pos);
-					List<WorldPos> list = new ArrayList<>(stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get()) == null ? List.of() : stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get()));
-					if (!list.contains(wp)) list.add(wp);
+					List<WorldPos> current = stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get());
+					List<WorldPos> list = new ArrayList<>(current == null ? List.of() : current);
+					if (list.contains(wp)) {
+						list.remove(wp);
+						if (c.getPlayer() != null)
+							c.getPlayer().displayClientMessage(Component.literal("Unlinked terminal"), true);
+					} else {
+						list.add(wp);
+						if (c.getPlayer() != null)
+							c.getPlayer().displayClientMessage(Component.translatable("chat.toms_storage.terminal_bound"), true);
+					}
 					stack.set(UltraWirelessTerminalMod.BOUND_TERMINALS.get(), list);
-					if (c.getPlayer() != null)
-						c.getPlayer().displayClientMessage(Component.translatable("chat.toms_storage.terminal_bound"), true);
 					return InteractionResult.SUCCESS;
 				}
 			} else {
