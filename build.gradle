@@ -1,0 +1,27 @@
+plugins {
+    id 'net.neoforged.moddev' version '1.0.17'
+}
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = '21.1.251'
+    runs {
+        client { client() }
+        server { server() }
+    }
+    mods {
+        ultra_wireless_terminal {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    compileOnly files('libs/toms_storage_stubs.jar')
+}
+
+processResources {
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(version: '1.0.0', mcversion: '1.21.1')
+    }
+}

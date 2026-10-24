@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:ender_eye" },
+    { "item": "toms_storage:adv_wireless_terminal" }
+  ],
+  "result": {
+    "id": "ultra_wireless_terminal:ultra_wireless_terminal",
+    "count": 1
+  }
+}

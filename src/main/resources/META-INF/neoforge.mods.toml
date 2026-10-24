@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+[[mods]]
+modId="ultra_wireless_terminal"
+version="${version}"
+displayName="Ultra Wireless Terminal"
+authors="ultra"
+description="Ultra wireless terminal linking multiple Tom's Storage terminals"
+[[dependencies.ultra_wireless_terminal]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21.1,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.ultra_wireless_terminal]]
+    modId="minecraft"
+    type="required"
+    versionRange="[1.21.1,1.22)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.ultra_wireless_terminal]]
+    modId="toms_storage"
+    type="required"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"
