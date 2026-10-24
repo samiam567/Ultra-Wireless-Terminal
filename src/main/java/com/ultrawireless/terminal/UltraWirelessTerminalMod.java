@@ -3,6 +3,9 @@ package com.ultrawireless.terminal;
 import java.util.List;
 
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraft.world.item.Item;
@@ -37,7 +40,9 @@ public class UltraWirelessTerminalMod {
 	}
 
 	private void addCreative(BuildCreativeModeTabContentsEvent event) {
-		if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+		ResourceKey<CreativeModeTab> tomsTab = ResourceKey.create(Registries.CREATIVE_MODE_TAB,
+				ResourceLocation.fromNamespaceAndPath("toms_storage", "tab"));
+		if (event.getTabKey().equals(tomsTab)) {
 			event.accept(ULTRA_WIRELESS_TERMINAL.get());
 		}
 	}
