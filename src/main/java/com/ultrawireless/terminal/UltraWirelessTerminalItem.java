@@ -154,9 +154,13 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 		return best;
 	}
 
+	public static int getConfiguredRange() {
+		return Config.get().advWirelessRange;
+	}
+
 	@Override
 	public int getRange(Player pl, ItemStack stack) {
-		return Config.get().advWirelessRange;
+		return getConfiguredRange();
 	}
 
 	@Override
