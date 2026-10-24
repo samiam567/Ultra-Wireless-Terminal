@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import com.tom.storagemod.Config;
 import com.tom.storagemod.components.WorldPos;
 import com.tom.storagemod.item.WirelessTerminal;
 
@@ -155,7 +156,7 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 
 	@Override
 	public int getRange(Player pl, ItemStack stack) {
-		return 64;
+		return Config.get().advWirelessRange;
 	}
 
 	@Override
