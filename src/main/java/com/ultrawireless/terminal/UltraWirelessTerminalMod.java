@@ -2,18 +2,21 @@ package com.ultrawireless.terminal;
 
 import java.util.List;
 
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.loading.FMLEnvironment;
+
+import com.tom.storagemod.components.WorldPos;
+
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraft.world.item.Item;
-import net.neoforged.bus.api.IEventBus;
+import net.minecraft.world.item.CreativeModeTab;
+
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-
-import com.tom.storagemod.components.WorldPos;
 
 @net.neoforged.fml.common.Mod(UltraWirelessTerminalMod.MODID)
 public class UltraWirelessTerminalMod {
@@ -30,6 +33,12 @@ public class UltraWirelessTerminalMod {
 							.persistent(WorldPos.CODEC.listOf())
 							.build());
 
+	public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>, net.minecraft.core.component.DataComponentType<List<WorldPos>>> BOUND_STOCK_TICKERS =
+			COMPONENTS.register("bound_stock_tickers", () ->
+					net.minecraft.core.component.DataComponentType.<List<WorldPos>>builder()
+							.persistent(WorldPos.CODEC.listOf())
+							.build());
+
 	public static final DeferredHolder<Item, Item> ULTRA_WIRELESS_TERMINAL =
 			ITEMS.register("ultra_wireless_terminal", () -> new UltraWirelessTerminalItem(new Item.Properties().stacksTo(1)));
 
@@ -37,6 +46,9 @@ public class UltraWirelessTerminalMod {
 		ITEMS.register(modEventBus);
 		COMPONENTS.register(modEventBus);
 		modEventBus.addListener(this::addCreative);
+		modEventBus.addListener(UltraWirelessTerminalNetworkHandler::onPayloadRegister);
+		if (FMLEnvironment.dist == Dist.CLIENT)
+			UltraWirelessTerminalClient.register(modEventBus);
 	}
 
 	private void addCreative(BuildCreativeModeTabContentsEvent event) {

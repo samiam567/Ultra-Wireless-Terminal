@@ -2,6 +2,8 @@ package com.ultrawireless.terminal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.reflect.Method;
+import java.util.Optional;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -20,6 +22,9 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
+
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -32,24 +37,43 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 	public static final TagKey<net.minecraft.world.level.block.Block> REMOTE_ACTIVATE =
 			BlockTags.create(ResourceLocation.fromNamespaceAndPath("toms_storage", "remote_activate"));
 
+	private static final ResourceLocation STOCK_TICKER_LOCATION =
+			ResourceLocation.fromNamespaceAndPath("create", "stock_ticker");
+
 	public UltraWirelessTerminalItem(Properties properties) {
 		super(properties);
+	}
+
+	public static boolean isStockTicker(net.minecraft.world.level.block.Block block) {
+		if (block == null)
+			return false;
+		Optional<ResourceLocation> loc = block.builtInRegistryHolder().unwrapKey().map(key -> key.location());
+		return loc.isPresent() && loc.get().equals(STOCK_TICKER_LOCATION);
 	}
 
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext tooltipContext, List<Component> tooltip, TooltipFlag tooltipFlag) {
 		List<WorldPos> linked = stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get());
-		int count = linked == null ? 0 : linked.size();
-		tooltip.add(Component.literal("Linked terminals: " + count).withStyle(ChatFormatting.GRAY));
+		int termCount = linked == null ? 0 : linked.size();
+		tooltip.add(Component.literal("Linked terminals: " + termCount).withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.literal("Linked stock tickers: " + stockTickerCount(stack)).withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.translatable("tooltip.toms_storage.adv_wireless_terminal.keybind", Component.translatable("tooltip.toms_storage.adv_wireless_terminal.keybind.outline", Component.keybind("key.toms_storage.open_terminal")).withStyle(ChatFormatting.GREEN)));
 		if (Screen.hasShiftDown()) {
 			tooltip.add(Component.literal("Links to multiple Tom's Storage terminals.").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 			tooltip.add(Component.literal("Sneak + right-click a terminal to link/unlink.").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.literal("Links to multiple Create stock tickers.").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+			tooltip.add(Component.literal("Sneak + right-click a stock ticker to link/unlink.").withStyle(ChatFormatting.GRAY));
 			tooltip.add(Component.literal("Sneak + right-click in air to clear all.").withStyle(ChatFormatting.GRAY));
 			tooltip.add(Component.literal("Right-click to open the closest available linked terminal.").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.translatable("tooltip.ultra_wireless_terminal.open_stock_ticker_keybind").withStyle(ChatFormatting.GRAY));
 		} else {
 			tooltip.add(Component.translatable("tooltip.toms_storage.hold_shift_for_info").withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY));
 		}
+	}
+
+	private static int stockTickerCount(ItemStack stack) {
+		List<WorldPos> linked = stack.get(UltraWirelessTerminalMod.BOUND_STOCK_TICKERS.get());
+		return linked == null ? 0 : linked.size();
 	}
 
 	@Override
@@ -109,8 +133,8 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 			if (!c.getLevel().isClientSide) {
 				BlockPos pos = c.getClickedPos();
 				BlockState state = c.getLevel().getBlockState(pos);
+				ItemStack stack = c.getItemInHand();
 				if (state.is(REMOTE_ACTIVATE)) {
-					ItemStack stack = c.getItemInHand();
 					WorldPos wp = new WorldPos(c.getLevel().dimension(), pos);
 					List<WorldPos> current = stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get());
 					List<WorldPos> list = new ArrayList<>(current == null ? List.of() : current);
@@ -125,12 +149,63 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 					}
 					stack.set(UltraWirelessTerminalMod.BOUND_TERMINALS.get(), list);
 					return InteractionResult.SUCCESS;
+				} else if (isStockTicker(state.getBlock())) {
+					WorldPos wp = new WorldPos(c.getLevel().dimension(), pos);
+					List<WorldPos> current = stack.get(UltraWirelessTerminalMod.BOUND_STOCK_TICKERS.get());
+					List<WorldPos> list = new ArrayList<>(current == null ? List.of() : current);
+					if (list.contains(wp)) {
+						list.remove(wp);
+						if (c.getPlayer() != null)
+							c.getPlayer().displayClientMessage(Component.literal("Unlinked stock ticker"), true);
+					} else {
+						list.add(wp);
+						if (c.getPlayer() != null)
+							c.getPlayer().displayClientMessage(Component.literal("Linked stock ticker"), true);
+					}
+					stack.set(UltraWirelessTerminalMod.BOUND_STOCK_TICKERS.get(), list);
+					return InteractionResult.SUCCESS;
 				}
 			} else {
 				return InteractionResult.CONSUME;
 			}
 		}
 		return InteractionResult.PASS;
+	}
+
+	public static void activateStockTicker(ServerPlayer player, ItemStack stack) {
+		if (player.level().isClientSide())
+			return;
+		List<WorldPos> linked = stack.get(UltraWirelessTerminalMod.BOUND_STOCK_TICKERS.get());
+		if (linked == null || linked.isEmpty())
+			return;
+		List<WorldPos> available = new ArrayList<>();
+		for (WorldPos wp : linked) {
+			Level termWorld = player.getServer().getLevel(wp.dim());
+			if (termWorld == null)
+				continue;
+			BlockPos bp = wp.pos();
+			if (!termWorld.isLoaded(bp))
+				continue;
+			if (!isStockTicker(termWorld.getBlockState(bp).getBlock()))
+				continue;
+			available.add(wp);
+		}
+		WorldPos best = selectClosest(available, player.level().dimension(),
+				player.getX(), player.getY(), player.getZ());
+		if (best != null)
+			openStockTickerAt(player, best.pos());
+	}
+
+	private static void openStockTickerAt(ServerPlayer player, BlockPos pos) {
+		try {
+			Class<?> handlerClass = Class.forName("com.simibubi.create.content.logistics.stockTicker.StockInteractionHandler");
+			Method method = handlerClass.getMethod("interactWithLogisticsManagerAt", Player.class, Level.class, BlockPos.class);
+			method.setAccessible(true);
+			method.invoke(null, player, player.level(), pos);
+		} catch (ClassNotFoundException e) {
+		} catch (Exception e) {
+			player.displayClientMessage(Component.literal("Failed to open stock ticker: " + e.getMessage()), true);
+		}
 	}
 
 	public static WorldPos selectClosest(List<WorldPos> candidates, net.minecraft.resources.ResourceKey<Level> playerDim,
