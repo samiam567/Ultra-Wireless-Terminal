@@ -55,17 +55,21 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 	public void appendHoverText(ItemStack stack, TooltipContext tooltipContext, List<Component> tooltip, TooltipFlag tooltipFlag) {
 		List<WorldPos> linked = stack.get(UltraWirelessTerminalMod.BOUND_TERMINALS.get());
 		int termCount = linked == null ? 0 : linked.size();
+		boolean createPresent = isCreateInstalled();
 		tooltip.add(Component.literal("Linked terminals: " + termCount).withStyle(ChatFormatting.GRAY));
-		tooltip.add(Component.literal("Linked stock tickers: " + stockTickerCount(stack)).withStyle(ChatFormatting.GRAY));
+		if (createPresent)
+			tooltip.add(Component.literal("Linked stock tickers: " + stockTickerCount(stack)).withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.translatable("tooltip.ultra_wireless_terminal.open_terminal_keybind", Component.keybind("key.toms_storage.open_terminal").withStyle(ChatFormatting.GREEN)));
 		if (Screen.hasShiftDown()) {
 			tooltip.add(Component.literal("Links to multiple Tom's Storage terminals.").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 			tooltip.add(Component.literal("Sneak + right-click a terminal to link/unlink.").withStyle(ChatFormatting.GRAY));
-			tooltip.add(Component.literal("Links to multiple Create stock tickers.").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
-			tooltip.add(Component.literal("Sneak + right-click a stock ticker to link/unlink.").withStyle(ChatFormatting.GRAY));
+			if (createPresent) {
+				tooltip.add(Component.literal("Links to multiple Create stock tickers.").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+				tooltip.add(Component.literal("Sneak + right-click a stock ticker to link/unlink.").withStyle(ChatFormatting.GRAY));
+			}
 			tooltip.add(Component.literal("Sneak + right-click in air to clear all.").withStyle(ChatFormatting.GRAY));
 			tooltip.add(Component.literal("Right-click to open the closest available linked terminal.").withStyle(ChatFormatting.GRAY));
-			if (isCreateInstalled())
+			if (createPresent)
 				tooltip.add(Component.translatable("tooltip.ultra_wireless_terminal.open_stock_ticker_keybind", Component.keybind("key.ultra_wireless_terminal.open_stock_ticker").withStyle(ChatFormatting.GRAY)));
 		} else {
 			tooltip.add(Component.translatable("tooltip.toms_storage.hold_shift_for_info").withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY));
