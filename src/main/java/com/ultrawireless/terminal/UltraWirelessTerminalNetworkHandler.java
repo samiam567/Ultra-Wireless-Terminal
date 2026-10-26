@@ -1,5 +1,9 @@
 package com.ultrawireless.terminal;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.function.Predicate;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -39,6 +43,27 @@ public final class UltraWirelessTerminalNetworkHandler {
 			if (!item.isEmpty() && item.getItem() instanceof UltraWirelessTerminalItem)
 				return item;
 		}
-		return ItemStack.EMPTY;
+		return findCuriosTerminal(player);
+	}
+
+	private static ItemStack findCuriosTerminal(ServerPlayer player) {
+		try {
+			Class<?> curiosCap = Class.forName("top.theillusivec4.curios.api.CuriosCapability");
+			Object inventoryKey = curiosCap.getField("INVENTORY").get(null);
+			Method getCapability = player.getClass().getMethod("getCapability", inventoryKey.getClass());
+			Object handler = getCapability.invoke(player, inventoryKey);
+			if (handler == null)
+				return null;
+			Method findCurios = handler.getClass().getMethod("findCurios", Predicate.class);
+			for (Object curio : (List<?>) findCurios.invoke(handler,
+					(Predicate<ItemStack>) stack -> stack.getItem() instanceof UltraWirelessTerminalItem)) {
+				ItemStack item = (ItemStack) curio.getClass().getMethod("stack").invoke(curio);
+				if (item.getItem() instanceof UltraWirelessTerminalItem)
+					return item;
+			}
+		} catch (ReflectiveOperationException e) {
+			return null;
+		}
+		return null;
 	}
 }
