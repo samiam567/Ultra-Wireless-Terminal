@@ -198,7 +198,7 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
 
 	private static void openStockTickerAt(ServerPlayer player, BlockPos pos) {
 		try {
-			Class<?> handlerClass = Class.forName("com.simibubi.create.content.logistics.stockTicker.StockInteractionHandler");
+			Class<?> handlerClass = Class.forName("com.simibubi.create.content.logistics.stockTicker.StockTickerInteractionHandler");
 			Method method = handlerClass.getMethod("interactWithLogisticsManagerAt", Player.class, Level.class, BlockPos.class);
 			method.setAccessible(true);
 			method.invoke(null, player, player.level(), pos);
