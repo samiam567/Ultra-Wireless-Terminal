@@ -6,8 +6,10 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 
 public final class UltraWirelessTerminalClient {
@@ -18,7 +20,7 @@ public final class UltraWirelessTerminalClient {
 
 	public static void register(IEventBus modEventBus) {
 		modEventBus.addListener(UltraWirelessTerminalClient::registerKeyMappings);
-		modEventBus.addListener(UltraWirelessTerminalClient::onClientTick);
+		NeoForge.EVENT_BUS.register(UltraWirelessTerminalClient.class);
 	}
 
 	private static void registerKeyMappings(RegisterKeyMappingsEvent event) {
@@ -30,6 +32,7 @@ public final class UltraWirelessTerminalClient {
 		event.register(openStockTickerKey);
 	}
 
+	@SubscribeEvent
 	private static void onClientTick(ClientTickEvent.Post event) {
 		if (Minecraft.getInstance().player == null)
 			return;
