@@ -1,3 +1,15 @@
+# Gradle
 .gradle/
 build/
 logs/
+
+# NeoForge Moddev run output
+run/
+
+# Local IDE residue
+.eclipse/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db

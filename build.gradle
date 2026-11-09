@@ -31,10 +31,15 @@ test {
 }
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
     testCompileOnly files('libs/toms_storage_stubs.jar')
     testRuntimeOnly files('libs/toms_storage_stubs.jar')
     testCompileOnly fileTree(dir: 'build/moddev/artifacts', include: '*.jar')
-    testCompileOnly fileTree(dir: '/home/agent/.gradle/caches/modules-2', include: '**/*.jar')
     testRuntimeOnly fileTree(dir: 'build/moddev/artifacts', include: '*.jar')
-    testRuntimeOnly fileTree(dir: '/home/agent/.gradle/caches/modules-2', include: '**/*.jar')
+    // Portable reference to the Gradle user-home module cache (populated by
+    // the NeoForge moddev plugin on first build). Every developer resolves
+    // from their own ~/.gradle cache — no hardcoded /home/agent path.
+    def gradleCache = new File(gradle.gradleUserHomeDir, 'caches/modules-2')
+    testCompileOnly fileTree(dir: gradleCache, include: '**/*.jar')
+    testRuntimeOnly fileTree(dir: gradleCache, include: '**/*.jar')
 }
