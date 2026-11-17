@@ -2,33 +2,26 @@ modLoader="javafml"
 loaderVersion="[4,)"
 license="MIT"
 [[mods]]
-modId="ultra_wireless_terminal"
+modId="ultra_wireless_terminal_2"
 version="${version}"
-displayName="Ultra Wireless Terminal"
+displayName="Ultra Wireless Terminal 2"
 authors="ultra"
-description="Ultra wireless terminal linking multiple Tom's Storage terminals"
-[[dependencies.ultra_wireless_terminal]]
+description="Ultra wireless terminal 2 - open one bound in-range terminal at a time with GUI selection"
+[[dependencies.ultra_wireless_terminal_2]]
     modId="neoforge"
     type="required"
     versionRange="[21.1,)"
     ordering="NONE"
     side="BOTH"
-[[dependencies.ultra_wireless_terminal]]
+[[dependencies.ultra_wireless_terminal_2]]
     modId="minecraft"
     type="required"
     versionRange="[1.21.1,1.22)"
     ordering="NONE"
     side="BOTH"
-[[dependencies.ultra_wireless_terminal]]
+[[dependencies.ultra_wireless_terminal_2]]
     modId="toms_storage"
     type="required"
     versionRange="[0,)"
     ordering="AFTER"
-    side="BOTH"
-
-[[dependencies.ultra_wireless_terminal]]
-    modId="jei"
-    type="optional"
-    versionRange="[0,)"
-    ordering="NONE"
     side="BOTH"

@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -113,5 +114,13 @@ public class SelectionEdgeCasesTest {
         // endFar (100,64,100) is the FIRST element; netherNear (1,64,1) is geometrically
         // nearer to (0,64,0) but must NOT win because cross-dim distance is ignored.
         assertEquals(endFar, best);
+    }
+
+    @Test
+    void cycleDoesNotCrashWhenAllNullsAndDirZero() {
+        List<WorldPos> bound = new ArrayList<>();
+        bound.add(null);
+        bound.add(null);
+        assertNull(Selection.cycle(bound, null, 0, wp -> true));
     }
 }

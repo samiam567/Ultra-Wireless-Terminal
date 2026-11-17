@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "ultra_wireless_terminal:item/ultra_wireless_terminal"
-  }
-}

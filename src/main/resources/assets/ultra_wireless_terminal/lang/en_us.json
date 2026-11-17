@@ -1,6 +1,0 @@
-{
-  "item.ultra_wireless_terminal.ultra_wireless_terminal": "Ultra Wireless Terminal",
-  "tooltip.ultra_wireless_terminal.open_terminal_keybind": "press %s to open a storage terminal",
-  "tooltip.ultra_wireless_terminal.open_stock_ticker_keybind": "press %s to open a stock link",
-  "key.ultra_wireless_terminal.open_stock_ticker": "Open Closest Stock Ticker"
-}

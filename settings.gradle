@@ -5,4 +5,4 @@ pluginManagement {
         maven { url = 'https://maven.neoforged.net/releases' }
     }
 }
-rootProject.name = "ultra_wireless_terminal"
+rootProject.name = "ultra_wireless_terminal_2"
