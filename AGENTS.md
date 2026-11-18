@@ -4,8 +4,7 @@ A NeoForge mod for **Minecraft 1.21.1** (NeoForge `21.1.251`, Java 21). It adds 
 *Ultra Wireless Terminal 2* item that links to **multiple Tom's Storage terminals** and, when
 the Create mod is installed, **Create stock tickers**.
 
-Unlike v1 (`ultra_wireless_terminal`, which merged terminals into a custom Combined Terminal
-View), v2 **opens one bound terminal at a time — Tom's Storage's real terminal GUI** — exactly
+**opens one bound terminal at a time — Tom's Storage's real terminal GUI** — exactly
 like Tom's Storage' *advanced wireless terminal*, but with **in-GUI buttons to switch which
 bound in-range terminal is active**.
 
@@ -302,7 +301,6 @@ Plain **JUnit 5**, headless, against stubs + NeoForge/MC jars.
 
 - v2 complete: `./gradlew test` green (**66 tests, 0 failures**), `./gradlew build` green,
   jar contains no `net/minecraft` entries. `tools/UWT2_Selection.java` self-test: 15/15.
-- v1 `ultra_wireless_terminal` remains untouched in its own folder.
 - In-game verification not possible in the sandbox; GUI behavior is reasoned from
   Tom's Storage sources (`AbstractStorageTerminalScreen`, `NetworkHandler.handleTermServer`)
   and NeoForge event APIs verified against the 21.1.251 jars.

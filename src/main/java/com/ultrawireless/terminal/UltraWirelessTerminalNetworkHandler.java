@@ -26,7 +26,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 /**
  * Network handler for the single-bound-terminal (advanced wireless terminal) design.
  *
- * <p>Unlike the old combined view, this opens <b>one</b> Tom's Storage terminal at a time
+ * <p>this opens <b>one</b> Tom's Storage terminal at a time
  * via Tom's Storage's own block interaction ({@code useWithoutItem}), and overlays
  * selector buttons on that GUI (see {@link TerminalOverlay}) to switch which bound
  * in-range terminal is active.
