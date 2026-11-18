@@ -77,16 +77,22 @@ All in `com.ultrawireless.terminal`:
 
 | Class | Responsibility |
 |---|---|
-| `UltraWirelessTerminalMod` | `@Mod` entry. Registers item + 3 `DataComponentType`s (`bound_terminals`, `bound_stock_tickers`, `active_terminal`), network handler, client (client dist only). Creative-tab hook into `toms_storage:tab`. |
-| `UltraWirelessTerminalItem` | The item; implements `WirelessTerminal` (`getRange`=64, `open`, `canOpen`). `use` = open active-or-nearest (sneak = clear). `useOn` = link/unlink terminal or stock ticker. Tooltip shows link counts + active terminal. Static `selectClosest(...)` (v1 contract, kept for stock tickers + tests). Static `activateStockTicker` (nearest only). |
-| `UltraWirelessTerminalNetworkHandler` | Payload registration + server logic. `openActiveTerminal` = `Selection.resolveOnOpen` then `openTerminalAt` + persist active. `handleActivate` = `Selection.requestSwitch` then open + resend list. `handleRefresh` / `handleOpenSelector` send `TerminalListPacket`. Range checks via `InRangeChecker` + `InRangeResolver` (per-terminal block entity beacon level). `findTerminal` searches hands, inventory, curios (reflection). |
-| `TerminalOverlay` | Client-only. Renders one button per bound terminal beside any open `AbstractContainerScreen` panel (NeoForge `ContainerScreenEvent.Render.Foreground`), click via `ScreenEvent.MouseButtonPressed.Post`, refresh on `ScreenEvent.Opening`, clear on `Closing`. Pure geometry in `computeLayout(...)` (unit-tested); panel bounds via reflection on `leftPos/topPos/imageWidth/imageHeight` with safe fallback. |
-| `Selection` | **Pure selection rules** (no world access): `resolveOnOpen` (keep active / auto-nearest fallback), `requestSwitch` (only bound + in-range), `selectClosest`, `distanceSqr`. Mirrored dependency-free in `tools/UWT2_Selection.java`. |
+| `UltraWirelessTerminalMod` | `@Mod` entry. Registers item + `DataComponentType`s (`bound_terminals`, `bound_stock_tickers`, `active_terminal`, `terminal_names`, `clipboard_tag`), network handler, client (client dist only). Creative-tab hook into `toms_storage:tab`. |
+| `UltraWirelessTerminalItem` | The item; implements `WirelessTerminal` (`getRange`=64, `open`, `canOpen`). `use` = open active-or-nearest (sneak = clear). `useOn` = link/unlink terminal or stock ticker. Tooltip shows link counts + active terminal. Static `selectClosest(...)` (v1 contract, kept for stock tickers + tests). Static `activateStockTicker`. |
+| `UltraWirelessTerminalNetworkHandler` | Payload registration + server logic. `openActiveTerminal` = `Selection.resolveOnOpen` then `openTerminalAt` + persist active. `handleActivate` = `Selection.requestSwitch` then open + resend list. `handleRefresh` / `handleOpenSelector` send `TerminalListPacket`. `handleSaveClipboard` saves clipboard content to terminal item. Range checks via `InRangeChecker` + `InRangeResolver` (per-terminal block entity beacon level). `findTerminal` searches hands, inventory, curios (reflection). |
+| `TerminalOverlay` | Client-only. Coordinates selector screen opening, layer stacking (`openAsLayer`), and retry watchdog (`tickRetry`). |
+| `TerminalSelectorScreen` | Centred terminal selection GUI with terminal rows, renaming support, and Create Clipboard button. |
+| `TerminalClipboardScreen` | Adapts Create's `ClipboardScreen` for the terminal item, persisting changes via `ClipboardSavePacket`. |
+| `CreateStockTickerAutofill` | Client listener that autofills `#` address entries from the terminal's stored clipboard into Create's `StockKeeperRequestScreen`. |
+| `Selection` | **Pure selection rules** (no world access): `resolveOnOpen` (keep active / auto-nearest fallback), `requestSwitch` (only bound + in-range), `selectClosest`, `cycle`. Mirrored dependency-free in `tools/UWT2_Selection.java`. |
 | `InRangeContext` | Immutable player/dimension/range/beacon context. Mirrors Tom's Storage `canInteractWith`. |
 | `InRangeResolver` | Pure range logic (Tom's Storage `canInteractWith` replica: base reach 6, terminal reach, +25% menu-check bonus, beacon same-dim / cross-dim thresholds). |
 | `InRangeChecker` | Server-side: level loaded at terminal pos (any dimension) + block still `remote_activate` + beacon level via reflection (`getBeaconLevel()`) + `InRangeResolver`. |
 | `BeaconConfig` | Reflective read of Tom's Storage config `wirelessTermBeaconLvl` / `wirelessTermBeaconLvlCrossDim` (`-1` = disabled). |
-| `UltraWirelessTerminalClient` | Registers **N** (stock ticker) and **M** (selector/refresh) keybinds; registers `TerminalOverlay` on `NeoForge.EVENT_BUS`; `ClientTickEvent.Post` consumes keybinds → packets. |
+| `StockTickerProxy` | Runtime reflection helper for opening Create stock tickers and reach management. |
+| `StockTickerReach` | Pure decision logic for stock ticker reach expansion. |
+| `StockTickerBuffListener` | Server-side container listener managing player reach buffs while ticker menus are open. |
+| `UltraWirelessTerminalClient` | Registers keybinds (`open_stock_ticker`, `open_selector`, `cycle_terminal_next`, `cycle_terminal_previous`); registers client tick handler; registers `CreateStockTickerAutofill` if Create is loaded. |
 | `EmptyPayload` | Shared `StreamCodec` factory for empty payloads. |
 
 Packets:
@@ -98,7 +104,11 @@ Packets:
 | `RefreshListPacket` | client→server | container GUI opened: re-sync the overlay list |
 | `ActivatePacket` | client→server | overlay button click: set active + open (dim string + coords) |
 | `TerminalListPacket` | server→client | all bound terminals with `inRange` / `active` flags |
-| `UltraWirelessTerminalPacket` | client→server | open closest stock ticker (N) |
+| `UltraWirelessTerminalPacket` | client→server | open closest stock ticker |
+| `RenamePacket` | client→server | persist terminal custom name |
+| `CyclePacket` | client→server | cycle active terminal forward/backward |
+| `StockSummaryPacket` | server→client | fallback stock summary when remote ticker GUI cannot open |
+| `ClipboardSavePacket` | client→server | save edited Create clipboard content onto terminal item |
 
 `ActivatePacket.worldPos()` rebuilds `ResourceKey<Level>` with
 `ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(dimName))` (note: `create`,
@@ -138,16 +148,18 @@ javac tools/UWT2_Selection.java && java -cp tools UWT2_Selection   # prints SELF
 ## Testing
 
 Plain **JUnit 5**, headless, against stubs + NeoForge/MC jars.
-**8 test classes, 40 tests (all passing)**; report in `build/reports/tests/test/index.html`.
+**10 test classes, 66 tests (all passing)**; report in `build/reports/tests/test/index.html`.
 
 | Test class | Covers |
 |---|---|
 | `BasicTest` | `WorldPos` equality semantics |
 | `SelectionTest` | `selectClosest` — same-dim closest wins |
 | `SelectionEdgeCasesTest` | `selectClosest` robustness contract (nulls, ties, null dim) |
-| `StockTickerSelectionTest` | `selectClosest` for stock-ticker nearest selection |
 | `SelectionLogicTest` | **v2 rules**: keep-active, auto-nearest on open, switch refused out-of-range / unbound, null/empty handling, block-center distance |
-| `OverlayLayoutTest` | **v2 overlay geometry**: hidden for <2 terminals, right column, left fallback, both-off-screen gives up, height clipping, hit-test edges, label shortening |
+| `SelectionCycleTest` | Terminal cycling forward/backward with wraparound and reachability filtering |
+| `SelectorScreenLayoutTest` | Selector screen geometry, row scrolling, button layout |
+| `ActivationRetryTest` | Client-side activation retry watchdog |
+| `CreateStockTickerAutofillTest` | Pure clipboard address extraction, `#` precedence, checked/blank skipping, event bus registration |
 | `EventBusRegistrationTest` | `onClientTick` is `@SubscribeEvent` with the NeoForge event type |
 | `IsStockTickerTest` | `isStockTicker(null)` → false |
 
@@ -288,7 +300,7 @@ Plain **JUnit 5**, headless, against stubs + NeoForge/MC jars.
 
 ## Status (at time of writing)
 
-- v2 complete: `./gradlew test` green (**80 tests, 0 failures**), `./gradlew build` green,
+- v2 complete: `./gradlew test` green (**66 tests, 0 failures**), `./gradlew build` green,
   jar contains no `net/minecraft` entries. `tools/UWT2_Selection.java` self-test: 15/15.
 - v1 `ultra_wireless_terminal` remains untouched in its own folder.
 - In-game verification not possible in the sandbox; GUI behavior is reasoned from

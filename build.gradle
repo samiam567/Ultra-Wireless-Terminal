@@ -19,14 +19,17 @@ neoForge {
 repositories {
     // Proxies Maven Central too, so JUnit resolves without adding mavenCentral().
     maven { url = 'https://maven.neoforged.net/releases' }
+    // Create (optional compileOnly soft dependency): mod gates calls behind Class.forName
+    // at runtime so it runs fine without Create installed.
+    maven { url = 'https://api.modrinth.com/v2/maven2' }
 }
 
 dependencies {
-    compileOnly files('libs/toms_storage_stubs.jar')
+    compileOnly fileTree(dir: 'libs', include: '*.jar')
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
-    testCompileOnly files('libs/toms_storage_stubs.jar')
-    testRuntimeOnly files('libs/toms_storage_stubs.jar')
+    testCompileOnly fileTree(dir: 'libs', include: '*.jar')
+    testRuntimeOnly fileTree(dir: 'libs', include: '*.jar')
     testCompileOnly fileTree(dir: 'build/moddev/artifacts', include: '*.jar')
     testRuntimeOnly fileTree(dir: 'build/moddev/artifacts', include: '*.jar')
     def gradleCache = new File(gradle.gradleUserHomeDir, 'caches/modules-2')
@@ -39,5 +42,10 @@ processResources {
         expand(version: '1.0.0', mcversion: '1.21.1')
     }
 }
+
+// Force a source/compile encoding so non-ASCII glyphs (e.g. GUI arrow buttons) don't
+// depend on the host JVM's platform-default charset.
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
 
 test { useJUnitPlatform() }

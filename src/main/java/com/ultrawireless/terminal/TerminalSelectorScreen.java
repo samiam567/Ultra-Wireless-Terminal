@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * The terminal selection GUI: a centred list with one button per bound terminal. Opened by
@@ -187,9 +188,23 @@ public class TerminalSelectorScreen extends Screen {
                 }
             }
         }
+        // Footer: a centred Done + Clipboard pair sharing the close-button band. Widths
+        // are computed locally (not from closeWidth) so computeLayout / panelHeight and
+        // their tests are unaffected; each button is <= half the row so the pair always
+        // fits inside the panel.
+        int bandY = layout.closeY();
+        int bandH = layout.closeHeight();
+        int gap = 4;
+        int btnW = Math.min(90, (layout.panelWidth() - 2 * PANEL_PADDING - gap) / 2);
+        int groupX = layout.panelX() + (layout.panelWidth() - (2 * btnW + gap)) / 2;
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> onClose())
-                .bounds(layout.closeX(), layout.closeY(), layout.closeWidth(), layout.closeHeight())
-                .build());
+                .bounds(groupX, bandY, btnW, bandH).build());
+        if (StockTickerProxy.isCreateLoaded()) {
+            addRenderableWidget(Button.builder(
+                            Component.translatable("screen.ultra_wireless_terminal_2.clipboard_button"),
+                            b -> openClipboard())
+                    .bounds(groupX + btnW + gap, bandY, btnW, bandH).build());
+        }
         if (editBox != null) {
             setInitialFocus(editBox);
             editBox.setFocused(true);
@@ -219,6 +234,33 @@ public class TerminalSelectorScreen extends Screen {
     }
 
     /** Scroll the row window when it overflows (arrow keys / mouse wheel). */
+    private void openClipboard() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player == null) {
+            return;
+        }
+        ItemStack stack = findTerminalStack(mc.player);
+        TerminalOverlay.openClipboard(stack);
+    }
+
+    private static ItemStack findTerminalStack(net.minecraft.world.entity.player.Player player) {
+        ItemStack main = player.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (main.getItem() instanceof UltraWirelessTerminalItem) {
+            return main;
+        }
+        ItemStack off = player.getItemInHand(net.minecraft.world.InteractionHand.OFF_HAND);
+        if (off.getItem() instanceof UltraWirelessTerminalItem) {
+            return off;
+        }
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (item.getItem() instanceof UltraWirelessTerminalItem) {
+                return item;
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
     private void cycleVisible(int direction) {
         int total = terminals.size();
         if (total == 0) {

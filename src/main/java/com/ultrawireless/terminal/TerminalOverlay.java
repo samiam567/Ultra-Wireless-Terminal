@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Client-side coordinator for the terminal-selection flow. The old version also painted a
@@ -70,20 +71,23 @@ public final class TerminalOverlay {
     }
 
     /**
-     * Show a screen on top of whatever is up. From the world this must use
-     * {@code setScreen} (it releases the grabbed mouse; {@code pushGuiLayer} does not,
-     * which would leave the cursor unusable in our GUI). From a screen it is pushed as a
-     * NeoForge GUI layer, so closing pops back and the server-side menu stays open.
+     * Show a screen on top of whatever is up.
+     *
+     * <p>From the world this uses {@code setScreen} (it releases the grabbed mouse;
+     * {@code pushGuiLayer} does not, which would leave the cursor unusable in our GUI).
+     * Whenever <em>any</em> screen is already open — Tom's terminal, a chest, or one of
+     * our own screens — this pushes a NeoForge GUI layer: {@code pushGuiLayer} keeps the
+     * current screen alive underneath and {@code Screen.onClose()} pops back to it (and
+     * to the world when the stack empties), so container menus survive and selector →
+     * clipboard → back "just works".
      */
     public static void openAsLayer(Screen screen) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen == null) {
             mc.setScreen(screen);
-        } else if (!(mc.screen instanceof TerminalSelectorScreen)
-                && !(mc.screen instanceof StockSummaryScreen)) {
+        } else {
             mc.pushGuiLayer(screen);
         }
-        // already showing one of our screens: keep it (update paths handle content)
     }
 
     static TerminalListPacket lastList() {
@@ -114,6 +118,21 @@ public final class TerminalOverlay {
     static void clear() {
         lastList = new TerminalListPacket(List.of());
         selectorRequested = false;
+    }
+
+    /**
+     * The selector's Clipboard button: open Create's real clipboard GUI right here on the
+     * client, backed by the terminal item's own stored clipboard data.
+     *
+     * <p>Zero network round-trip needed: the player's stack already has its clipboard
+     * components synced. Changes are persisted via {@link ClipboardSavePacket} when the
+     * editor closes ({@link TerminalClipboardScreen#removed}).
+     */
+    public static void openClipboard(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || !(stack.getItem() instanceof UltraWirelessTerminalItem)) {
+            return;
+        }
+        openAsLayer(new TerminalClipboardScreen(stack));
     }
 
     /** Compact "overworld 12/64/-8" (namespace stripped); used by the selector rows. */

@@ -58,6 +58,8 @@ public final class UltraWirelessTerminalNetworkHandler {
                 UltraWirelessTerminalNetworkHandler::handleActivate);
         registrar.playToServer(RenamePacket.TYPE, RenamePacket.CODEC,
                 UltraWirelessTerminalNetworkHandler::handleRename);
+        registrar.playToServer(ClipboardSavePacket.TYPE, ClipboardSavePacket.CODEC,
+                UltraWirelessTerminalNetworkHandler::handleSaveClipboard);
         registrar.playToServer(RefreshListPacket.TYPE, RefreshListPacket.CODEC,
                 UltraWirelessTerminalNetworkHandler::handleRefresh);
         registrar.playToServer(CyclePacket.TYPE, CyclePacket.CODEC,
@@ -91,6 +93,11 @@ public final class UltraWirelessTerminalNetworkHandler {
     /** Ask the server to (re)name a bound terminal. Blank name clears the custom name. */
     public static void sendRename(String dimName, int x, int y, int z, String name) {
         PacketDistributor.sendToServer(new RenamePacket(dimName, x, y, z, name));
+    }
+
+    /** Client asks the server to persist edited clipboard content onto the terminal item. */
+    public static void sendSaveClipboard(net.minecraft.nbt.CompoundTag tag) {
+        PacketDistributor.sendToServer(new ClipboardSavePacket(tag));
     }
 
     /** Re-sync the overlay's button list (when the terminal GUI opens). */
@@ -251,6 +258,41 @@ public final class UltraWirelessTerminalNetworkHandler {
                 stack.set(UltraWirelessTerminalMod.TERMINAL_NAMES.get(), current);
             }
             sendTerminalList(player, stack);
+        });
+    }
+
+    /** Clipboard button in the selector: push the stored entries back to open the editor. */
+    private static void handleSaveClipboard(ClipboardSavePacket packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player)) {
+                return;
+            }
+            ItemStack stack = findTerminal(player);
+            if (stack.isEmpty()) {
+                return;
+            }
+            net.minecraft.nbt.CompoundTag tag = packet.tag();
+            if (tag == null || tag.isEmpty()) {
+                stack.remove(UltraWirelessTerminalMod.CLIPBOARD_TAG.get());
+            } else {
+                stack.set(UltraWirelessTerminalMod.CLIPBOARD_TAG.get(), tag);
+            }
+            // If Create is present, also mirror into AllDataComponents.CLIPBOARD_CONTENT so
+            // Create's own clipboard readers (e.g. AddressEditBoxHelper) see our data too.
+            if (StockTickerProxy.isCreateLoaded()) {
+                try {
+                    com.simibubi.create.content.equipment.clipboard.ClipboardContent content =
+                            com.simibubi.create.content.equipment.clipboard.ClipboardContent.CODEC
+                                    .parse(net.minecraft.nbt.NbtOps.INSTANCE, tag)
+                                    .result().orElse(null);
+                    if (content == null) {
+                        stack.remove(com.simibubi.create.AllDataComponents.CLIPBOARD_CONTENT);
+                    } else {
+                        stack.set(com.simibubi.create.AllDataComponents.CLIPBOARD_CONTENT, content);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
         });
     }
 

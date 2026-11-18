@@ -13,6 +13,8 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
 
+import java.lang.reflect.InvocationTargetException;
+
 public final class UltraWirelessTerminalClient {
 
     public static KeyMapping openStockTickerKey;
@@ -26,13 +28,23 @@ public final class UltraWirelessTerminalClient {
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(UltraWirelessTerminalClient::registerKeyMappings);
         NeoForge.EVENT_BUS.register(UltraWirelessTerminalClient.class);
+        if (StockTickerProxy.isCreateLoaded()) {
+            try {
+                Class<?> autofill = Class.forName("com.ultrawireless.terminal.CreateStockTickerAutofill");
+                NeoForge.EVENT_BUS.register(autofill.getDeclaredConstructor().newInstance());
+            } catch (Throwable ignored) {
+                // Create is loaded but our autofill class failed to load/register — silent no-op
+            }
+        }
     }
 
     private static void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        // unbound by default (UNKNOWN): isActiveAndMatches never matches UNKNOWN, so it
+        // stays silent until the player assigns a key in Controls
         openStockTickerKey = new KeyMapping(
                 "key.ultra_wireless_terminal_2.open_stock_ticker",
                 KeyConflictContext.IN_GAME,
-                InputConstants.Type.KEYSYM.getOrCreate(InputConstants.KEY_N),
+                InputConstants.UNKNOWN,
                 KeyMapping.CATEGORY_GAMEPLAY);
         event.register(openStockTickerKey);
 
@@ -66,7 +78,9 @@ public final class UltraWirelessTerminalClient {
 
     @SubscribeEvent
     private static void onClientTick(ClientTickEvent.Post event) {
-        pollKeybinds(Minecraft.getInstance());
+        Minecraft mc = Minecraft.getInstance();
+        pollKeybinds(mc);
+        TerminalOverlay.tickRetry();
     }
 
     /** Keybind polling, once per client tick (game keybinds only fire with no screen). */

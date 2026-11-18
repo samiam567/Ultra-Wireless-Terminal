@@ -240,9 +240,10 @@ public class UltraWirelessTerminalItem extends Item implements WirelessTerminal 
         WorldPos tickerPos = stack.get(UltraWirelessTerminalMod.LINKED_STOCK_TICKER.get());
         // Real GUI first: the ticker must be loaded on both sides for Create's menu to
         // resolve its block entity, and within the buffed reach so `stillValid` holds.
-        if (tickerPos != null && canReachRealTickerGui(player, tickerPos)
-                && StockTickerProxy.openRemote(player, tickerPos)) {
-            return;
+        if (tickerPos != null && canReachRealTickerGui(player, tickerPos)) {
+            if (StockTickerProxy.openRemote(player, tickerPos)) {
+                return;
+            }
         }
         java.util.UUID network = stack.get(UltraWirelessTerminalMod.LINKED_STOCK_NETWORK.get());
         if (network == null) {

@@ -86,6 +86,20 @@ public class UltraWirelessTerminalMod {
                             .build());
 
     /**
+     * Stored Create clipboard data (as NBT CompoundTag) inside the Ultra Wireless Terminal item.
+     * When Create is present, this is serialized from / deserialized to Create's
+     * {@code ClipboardContent}. When opened, the child class {@link TerminalClipboardScreen}
+     * displays Create's full clipboard UI.
+     */
+    public static final DeferredHolder<
+            net.minecraft.core.component.DataComponentType<?>,
+            net.minecraft.core.component.DataComponentType<net.minecraft.nbt.CompoundTag>> CLIPBOARD_TAG =
+            COMPONENTS.register("clipboard_tag", () ->
+                    net.minecraft.core.component.DataComponentType.<net.minecraft.nbt.CompoundTag>builder()
+                            .persistent(net.minecraft.nbt.CompoundTag.CODEC)
+                            .build());
+
+    /**
      * The currently active (selected) terminal. A single {@code WorldPos} that the player
      * has chosen to use via the overlay GUI buttons. When this terminal goes out of range,
      * the next open automatically selects the nearest in-range terminal (see
@@ -111,8 +125,9 @@ public class UltraWirelessTerminalMod {
         // grants/revokes the stock-ticker reach buff server-side when Create's stock menu
         // opens/closes; harmless no-op on the client (event never fires there)
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(StockTickerBuffListener.class);
-        if (FMLEnvironment.dist == Dist.CLIENT)
+        if (FMLEnvironment.dist == Dist.CLIENT) {
             UltraWirelessTerminalClient.register(modEventBus);
+        }
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
